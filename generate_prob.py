@@ -11,16 +11,24 @@ def main():
     parser = argparse.ArgumentParser(description='Generates frequency of \
             landing on a square in Monopoly given a prob distrobution of \
             the dice')
+    parser.add_argument("--ep", action="store", nargs="?", type=int,\
+                        default=1,\
+                        help="Set how many episodes (num of games) for the sim")
+    parser.add_argument("--turns", action="store", nargs="?", type=int,\
+                        default=100,\
+                        help="Set how many turns (dice rolls) for the sim")
+    parser.add_argument("--v", action="count", default=0,\
+                        help="Flag for verbose output")
     group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--fair", action="count", default = 0, \
+                        help="Flag to use fair dice")
     group.add_argument("--dice", action="store", nargs="+",  \
-                        help = "List 6 fractions that sum to 1. Each position \
+                        help="List 6 fractions that sum to 1. Each position \
                         corresponds to the probability of the number at \
                         that position+1. e.g. position 0 is the probability \
                         of rolling a 1")
-    group.add_argument("--fair", action="count", default = 0, \
-                        help = "Flag to use fair dice")
+
     args = parser.parse_args()
-    print(args.fair)
 
     global DICE_PROB
     if args.fair:
@@ -28,8 +36,26 @@ def main():
     else:
         DICE_PROB = processKWDice(args.dice)
 
-    global jailCnt
-    jailCnt = 0
+    episodes = []
+
+    for i in range(args.ep):
+        run = newGame(args.turns, i, args.v)
+        episodes.append(run)
+
+    #TODO AVERAGE THE EIPSODES AND DO SOME DATA VIZ
+
+def newGame(turns, gNum, verbose):
+    """
+    Runs a game of Monopoly
+    @params:
+        - number of turns
+        - the game number
+        - verbose output or not (prints game summary)
+    @returns: board freq
+    """
+    global jailCnt, cardCnt
+    jailCnt = [0,0] #[turns in jail, total turns in jail this game]
+    cardCnt = [0,0] #[chance, community chest]
 
     board = {}
     for i in range(40): #40 sqaures on board, sq 0 is GO
@@ -37,11 +63,19 @@ def main():
 
     playerPos = movePlayer(board, 0) #start pos
 
-    for j in range(1000):
+    for j in range(turns):
         playerPos = movePlayer(board, playerPos)
 
-    print(list(filter(lambda x: x[1]!=0, board.items())))
-    print("*"*10)
+    if verbose:
+        print(f"\nGame {gNum+1} consisted of {turns} turns\n \
+                * {jailCnt[1]} turns in jail \n \
+                * {cardCnt[0]} chance cards drawn\n \
+                * {cardCnt[1]} community chest cards drawn\n \
+                ")
+        print(list(filter(lambda x: x[1]!=0, board.items())))
+        print("*"*10)
+
+    return list(board.items())
 
 
 def movePlayer(board, currentPos):
@@ -52,6 +86,8 @@ def movePlayer(board, currentPos):
         - currentPos: where the player is currently located
     @returns: the players position after the dice roll
     """
+    global cardCnt
+
     if currentPos == 30: #landed on go to jail
         return jail()
 
@@ -62,9 +98,11 @@ def movePlayer(board, currentPos):
     board[nextPos] += 1
 
     if nextPos in [7,22,36]: # chance squares
+        cardCnt[0]+=1
         nextPos = chance_c(nextPos)
 
     if nextPos in [2,17, 33]: # community chest squares
+        cardCnt[1]+=1
         nextPos = community_chest()
 
     return nextPos
@@ -73,7 +111,7 @@ def rollDice(jail=False):
     """
     Simulates rolling two 6 sided dice. The probability distrobution of the die
     is determined via cmd line
-    @param: None
+    @param: jail
     @returns:
         - the sum of the two rolls if not in jail
         - the value of both rolls if in jail
@@ -121,15 +159,16 @@ def jail():
         - nextPos if you're out of jail
     """
     global jailCnt
-    jailCnt += 1
+    jailCnt[0] += 1 #count for this stay in jail
+    jailCnt[1] += 1 #count for game
 
     if jailCnt == 4: # leave jail; end of 3 turn stay
-        jailCnt = 0
+        jailCnt[0] = 0
         return (10 + rollDice())
     else:
         d1, d2 = rollDice(True)
         if d1 == d2: # roll doubles; leave jail
-            jailCnt = 0
+            jailCnt[0] = 0
             return (10 + d1 + d2)
         else: # stuck in jail
             return 30
@@ -142,13 +181,16 @@ def community_chest():
         - move to GO (pos 0)
         -move to reading railroad (pos 5)
     @param: None
-    @ret: new position of player
+    @@returns: new position of player
     """
     chestCards = [10,0,5,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
     return random.choice(chestCards)
 
 def chance_c(currentPos):
     """
+    Simulates pulling a chance card.
+    @param: current position of player
+    @returns: new position of player
     """
     chanceDeck = {
                 "nearestUtility": nearestUtility,
@@ -161,16 +203,18 @@ def chance_c(currentPos):
                 "moveGO": 0,
                 "NOTHING": -1
             }
+
     cards =  list(chanceDeck.keys())
     d = np.random.choice(cards, p=[1/16,1/16,1/16,1/8,1/16,1/16,1/16,1/16,7/16])
-    print(f"doing {d}, current position {currentPos}")
+
+    #using dispatch table for complex movement; int for simple movement
     try:
         ret = chanceDeck[d](currentPos)
     except:
         ret = chanceDeck[d]
         if ret == -1:
             ret = currentPos
-    print(f"new position is {ret}")
+
     return ret
 
 def nearestUtility(currentPos):
@@ -207,4 +251,5 @@ def backThree(currentPos):
     """
     return (currentPos - 3)%40
 
-main()
+if __name__ == "__main__":
+    main()
