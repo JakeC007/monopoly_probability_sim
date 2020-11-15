@@ -3,6 +3,7 @@
 Blah blah blah
 """
 import numpy as np
+import random
 import argparse
 import sys
 
@@ -21,13 +22,14 @@ def main():
     args = parser.parse_args()
     print(args.fair)
 
-
     global DICE_PROB
     if args.fair:
         DICE_PROB = [1/6,1/6,1/6,1/6,1/6,1/6]
     else:
         DICE_PROB = processKWDice(args.dice)
 
+    global jailCnt
+    jailCnt = 0
 
     board = {}
     for i in range(40): #40 sqaures on board, sq 0 is GO
@@ -59,41 +61,22 @@ def movePlayer(board, currentPos):
 
     board[nextPos] += 1
 
-    if nextPos in [7,22,36] # chance
-        #1/16 nearest utility
-            #- pos 12 and 28
-        #1/16 st charles (POS 11)
-            #-
-        # 1/16 jail (POS 10)
-        #1/8 go to neartest rail road
-            #- POS 5,15,25,35
-        #go back 3 spaces
-        #go to boardwalk
-            #-POS 39
-        #go to illoios
-            #-POS 24
-        # go to GO
-            #- POS 0
+    if nextPos in [7,22,36]: # chance squares
+        nextPos = chance_c(nextPos)
 
-    if nextPos in [2,17, 33] # community chest
-        # 1/16 go to jail (pos 10)
-        #1/16 go to GO (pos 0)
-        #1/16 reading reail road (POS 5)
+    if nextPos in [2,17, 33]: # community chest squares
+        nextPos = community_chest()
 
     return nextPos
 
-
-    # if chance:
-    #     pass
-    # if community chest:
-    #     pass
-
-def rollDice():
+def rollDice(jail=False):
     """
     Simulates rolling two 6 sided dice. The probability distrobution of the die
     is determined via cmd line
     @param: None
-    @returns:  the sum of the two rolls
+    @returns:
+        - the sum of the two rolls if not in jail
+        - the value of both rolls if in jail
     """
 
     global DICE_PROB
@@ -107,7 +90,10 @@ def rollDice():
 
     d2 = np.random.choice(val, p=DICE_PROB)
 
-    return (d1+d2)
+    if jail == True:
+        return d1, d2
+    else:
+        return (d1+d2)
 
 def processKWDice(lst):
     """
@@ -128,13 +114,97 @@ def processKWDice(lst):
 
 def jail():
     """
-    Handles moves if you're in jail.
+    Handles moves if you're in jail. A player can leave jail if (1) they roll
+    doubles or (2) it is their third turn in jail
     @returns:
         - 30 if still in jail
         - nextPos if you're out of jail
     """
-    # if doubles leave amount of doubles
-    # NEED GLOBAL JAIL COUNTER
-        #If counter gets to four leave jail and reset
+    global jailCnt
+    jailCnt += 1
+
+    if jailCnt == 4: # leave jail; end of 3 turn stay
+        jailCnt = 0
+        return (10 + rollDice())
+    else:
+        d1, d2 = rollDice(True)
+        if d1 == d2: # roll doubles; leave jail
+            jailCnt = 0
+            return (10 + d1 + d2)
+        else: # stuck in jail
+            return 30
+
+def community_chest():
+    """
+    Simulates pulling a community chest card. The cards have the following
+    operations on movement:
+        - move to jail (pos 10)
+        - move to GO (pos 0)
+        -move to reading railroad (pos 5)
+    @param: None
+    @ret: new position of player
+    """
+    chestCards = [10,0,5,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
+    return random.choice(chestCards)
+
+def chance_c(currentPos):
+    """
+    """
+    chanceDeck = {
+                "nearestUtility": nearestUtility,
+                "moveSt_charles": 11,
+                "jail": 30,
+                "nearestRail": nearestRail,
+                "backThree": backThree,
+                "moveBoardwalk": 39,
+                "moveIllinois": 24,
+                "moveGO": 0,
+                "NOTHING": -1
+            }
+    cards =  list(chanceDeck.keys())
+    d = np.random.choice(cards, p=[1/16,1/16,1/16,1/8,1/16,1/16,1/16,1/16,7/16])
+    print(f"doing {d}, current position {currentPos}")
+    try:
+        ret = chanceDeck[d](currentPos)
+    except:
+        ret = chanceDeck[d]
+        if ret == -1:
+            ret = currentPos
+    print(f"new position is {ret}")
+    return ret
+
+def nearestUtility(currentPos):
+    """
+    Moves the player to the nearest utility
+        - either pos 12 or 28
+    @param: player's current position
+    @returns player's new position
+    """
+    if currentPos > 12 and currentPos <= 28:
+        return 28
+    else:
+        return 12
+
+def nearestRail(currentPos):
+    """
+    Moves the player to the nearest utility
+        - either pos 5, 15, 25, or 35
+    @param: player's current position
+    @returns player's new position
+    """
+    for i in [5,15,25,35]:
+        delta = i - currentPos
+        if delta > 0:
+            return i
+
+    return 5 # player is past sq. 35; sq. 5 is now the closest
+
+def backThree(currentPos):
+    """
+    Moves the player back three spaces
+    @param: player's current position
+    @returns player's new position
+    """
+    return (currentPos - 3)%40
 
 main()
