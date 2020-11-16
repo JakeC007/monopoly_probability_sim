@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 """
-Blah blah blah
+Simulates dice rolls in monopoly to figure out what the most frequented squares
+on the board are.
+Created: November 15, 2020
+Author: Jake Chanenson 
 """
 import numpy as np
 import random
@@ -53,9 +56,9 @@ def newGame(turns, gNum, verbose):
         - verbose output or not (prints game summary)
     @returns: board freq
     """
-    global jailCnt, cardCnt
-    jailCnt = [0,0] #[turns in jail, total turns in jail this game]
-    cardCnt = [0,0] #[chance, community chest]
+    global JAILCNT, CARDCNT
+    JAILCNT = [0,0] #[turns in jail, total turns in jail this game]
+    CARDCNT = [0,0] #[chance, community chest]
 
     board = {}
     for i in range(40): #40 sqaures on board, sq 0 is GO
@@ -68,9 +71,9 @@ def newGame(turns, gNum, verbose):
 
     if verbose:
         print(f"\nGame {gNum+1} consisted of {turns} turns\n \
-                * {jailCnt[1]} turns in jail \n \
-                * {cardCnt[0]} chance cards drawn\n \
-                * {cardCnt[1]} community chest cards drawn\n \
+                * {JAILCNT[1]} turns in jail \n \
+                * {CARDCNT[0]} chance cards drawn\n \
+                * {CARDCNT[1]} community chest cards drawn\n \
                 ")
         print(list(filter(lambda x: x[1]!=0, board.items())))
         print("*"*10)
@@ -86,7 +89,7 @@ def movePlayer(board, currentPos):
         - currentPos: where the player is currently located
     @returns: the players position after the dice roll
     """
-    global cardCnt
+    global CARDCNT
 
     if currentPos == 30: #landed on go to jail
         return jail()
@@ -98,11 +101,11 @@ def movePlayer(board, currentPos):
     board[nextPos] += 1
 
     if nextPos in [7,22,36]: # chance squares
-        cardCnt[0]+=1
+        CARDCNT[0]+=1
         nextPos = chance_c(nextPos)
 
     if nextPos in [2,17, 33]: # community chest squares
-        cardCnt[1]+=1
+        CARDCNT[1]+=1
         nextPos = community_chest()
 
     return nextPos
@@ -158,17 +161,17 @@ def jail():
         - 30 if still in jail
         - nextPos if you're out of jail
     """
-    global jailCnt
-    jailCnt[0] += 1 #count for this stay in jail
-    jailCnt[1] += 1 #count for game
+    global JAILCNT
+    JAILCNT[0] += 1 #count for this stay in jail
+    JAILCNT[1] += 1 #count for game
 
-    if jailCnt == 4: # leave jail; end of 3 turn stay
-        jailCnt[0] = 0
+    if JAILCNT == 4: # leave jail; end of 3 turn stay
+        JAILCNT[0] = 0
         return (10 + rollDice())
     else:
         d1, d2 = rollDice(True)
         if d1 == d2: # roll doubles; leave jail
-            jailCnt[0] = 0
+            JAILCNT[0] = 0
             return (10 + d1 + d2)
         else: # stuck in jail
             return 30
@@ -192,6 +195,7 @@ def chance_c(currentPos):
     @param: current position of player
     @returns: new position of player
     """
+
     chanceDeck = {
                 "nearestUtility": nearestUtility,
                 "moveSt_charles": 11,
@@ -208,12 +212,12 @@ def chance_c(currentPos):
     d = np.random.choice(cards, p=[1/16,1/16,1/16,1/8,1/16,1/16,1/16,1/16,7/16])
 
     #using dispatch table for complex movement; int for simple movement
-    try:
-        ret = chanceDeck[d](currentPos)
-    except:
+    if isinstance(chanceDeck[d],int):
         ret = chanceDeck[d]
         if ret == -1:
             ret = currentPos
+    else:
+        ret = chanceDeck[d](currentPos)
 
     return ret
 
