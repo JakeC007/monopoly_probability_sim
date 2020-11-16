@@ -3,9 +3,10 @@
 Simulates dice rolls in monopoly to figure out what the most frequented squares
 on the board are.
 Created: November 15, 2020
-Author: Jake Chanenson 
+Author: Jake Chanenson
 """
 import numpy as np
+import operator
 import random
 import argparse
 import sys
@@ -57,24 +58,28 @@ def newGame(turns, gNum, verbose):
     @returns: board freq
     """
     global JAILCNT, CARDCNT
-    JAILCNT = [0,0] #[turns in jail, total turns in jail this game]
+    JAILCNT = 0 #turns in jail
     CARDCNT = [0,0] #[chance, community chest]
 
     board = {}
+    board["IN_JAIL"] = 0
     for i in range(40): #40 sqaures on board, sq 0 is GO
         board[i] = 0
 
     playerPos = movePlayer(board, 0) #start pos
 
-    for j in range(turns):
+    for j in range(turns-1):
         playerPos = movePlayer(board, playerPos)
 
     if verbose:
         print(f"\nGame {gNum+1} consisted of {turns} turns\n \
-                * {JAILCNT[1]} turns in jail \n \
+                * {board['IN_JAIL']} turns in jail \n \
                 * {CARDCNT[0]} chance cards drawn\n \
                 * {CARDCNT[1]} community chest cards drawn\n \
+                * Top 5 most frequent spots are below\n\
                 ")
+        top5(board)
+        print(sum([x[1] for x in board.items()]))
         print(list(filter(lambda x: x[1]!=0, board.items())))
         print("*"*10)
 
@@ -92,7 +97,13 @@ def movePlayer(board, currentPos):
     global CARDCNT
 
     if currentPos == 30: #landed on go to jail
-        return jail()
+        jailPos =  jail()
+        if jailPos == 30: # still in jail
+            board["IN_JAIL"] += 1
+        else:
+            board[jailPos] += 1
+
+        return jailPos
 
     dNum = rollDice()
 
@@ -162,16 +173,15 @@ def jail():
         - nextPos if you're out of jail
     """
     global JAILCNT
-    JAILCNT[0] += 1 #count for this stay in jail
-    JAILCNT[1] += 1 #count for game
+    JAILCNT += 1 #count for this stay in jail
 
     if JAILCNT == 4: # leave jail; end of 3 turn stay
-        JAILCNT[0] = 0
+        JAILCNT = 0
         return (10 + rollDice())
     else:
         d1, d2 = rollDice(True)
         if d1 == d2: # roll doubles; leave jail
-            JAILCNT[0] = 0
+            JAILCNT = 0
             return (10 + d1 + d2)
         else: # stuck in jail
             return 30
@@ -254,6 +264,21 @@ def backThree(currentPos):
     @returns player's new position
     """
     return (currentPos - 3)%40
+
+def top5(board):
+    """
+    Returns a str of top 5 positions on the board
+    @param: game board
+    @returns: str
+    """
+    s = list(board.items())
+    s.sort(key=operator.itemgetter(1), reverse = True)
+
+    for i, j in s[:5]:
+        print(f"Index {i} with {j} vists\n")
+
+    return -4
+
 
 if __name__ == "__main__":
     main()
