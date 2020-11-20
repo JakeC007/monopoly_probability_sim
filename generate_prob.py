@@ -6,11 +6,11 @@ Created: November 15, 2020
 Author: Jake Chanenson
 """
 import numpy as np
+import matplotlib.pyplot as plt
 import operator
 import random
 import argparse
 import sys
-from collections import Counter
 
 def main():
     parser = argparse.ArgumentParser(description='Generates frequency of \
@@ -52,7 +52,7 @@ def main():
         avg = {k: avg.get(k,0) + e.get(k,0) for k, v in e.items()}
 
     print(list(avg.items()))
-
+    displayGraphs(avg, args)
     #TODO AVERAGE THE EIPSODES AND DO SOME DATA VIZ
 
 def newGame(turns, gNum, verbose):
@@ -319,6 +319,29 @@ def displayPercents(board, minimal = False):
         print(f"({pos}, {val*100:.2f}%) ", end = "")
 
     return None
+
+def displayGraphs(avg, args):
+    """
+    Displays various graphs and data viz
+    @param  -avg: dict of avg moves across all episodes
+    @retuns - None
+    """
+    a = [str(x) for x in avg.keys()]
+    b = (list(avg.values()))
+    # fig = plt.figure(figsize=(8,10))
+    # ax = fig.add_axes()
+    #
+    # ax.set_xlabel('Monopoly Square')
+    # ax.set_ylabel('Number of times Landed on a Sqaure')
+    # ax.set_title('Distribution of Where a Player Lands over %d Games With %d Turns Per Game' %(args.ep, args.turns))
+    # ax.bar(a,b, 1.0, color='b')
+    # plt.show()
+    pylab.bar(a,b, 1.0, color='b')
+    pylab.xlabel('Monopoly Square')
+    pylab.ylabel('Number of times Landed on a Sqaure')
+    pylab.title('Distribution of Where a Player Lands over %d Games With %d Turns Per Game' %(args.ep, args.turns))
+    pylab.set_size_inches(8,8)
+    pylab.show()
 
 if __name__ == "__main__":
     main()
