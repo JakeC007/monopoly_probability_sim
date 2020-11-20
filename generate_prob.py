@@ -21,7 +21,7 @@ def main():
     parser.add_argument("--turns", action="store", nargs="?", type=int,\
                         default=100,\
                         help="Set how many turns (dice rolls) for the sim")
-    parser.add_argument("--v", action="count", default=0,\
+    parser.add_argument("-v", action="count", default=0,\
                         help="Flag for verbose output")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--fair", action="count", default = 0, \
@@ -52,9 +52,9 @@ def newGame(turns, gNum, verbose):
     """
     Runs a game of Monopoly
     @params:
-        - number of turns
-        - the game number
-        - verbose output or not (prints game summary)
+        - turns: number of turns
+        - gNum: the game number
+        - verbose: output or not (prints game summary)
     @returns: board freq
     """
     global JAILCNT, CARDCNT
@@ -79,12 +79,13 @@ def newGame(turns, gNum, verbose):
                 * Top 5 most frequent spots are below\n\
                 ")
         top5(board)
-        print(sum([x[1] for x in board.items()]))
+        displayPercents(board)
+        displayPercents(board, True)
+        #print squares that were landed on
         print(list(filter(lambda x: x[1]!=0, board.items())))
         print("*"*10)
 
     return list(board.items())
-
 
 def movePlayer(board, currentPos):
     """
@@ -125,7 +126,8 @@ def rollDice(jail=False):
     """
     Simulates rolling two 6 sided dice. The probability distrobution of the die
     is determined via cmd line
-    @param: jail
+    @param - jail: if true changes dice rolls to jail outputs (i.e. only leave
+            on doubles)
     @returns:
         - the sum of the two rolls if not in jail
         - the value of both rolls if in jail
@@ -150,8 +152,8 @@ def rollDice(jail=False):
 def processKWDice(lst):
     """
     Processes the dice probabilities from the command line.
-    @param list of str
-    @return list of floats
+    @param - lst: list of str
+    @return - lst:list of floats
     """
     DICE_PROB = []
     for p in lst:
@@ -192,7 +194,7 @@ def community_chest():
     operations on movement:
         - move to jail (pos 10)
         - move to GO (pos 0)
-        -move to reading railroad (pos 5)
+        - move to reading railroad (pos 5)
     @param: None
     @@returns: new position of player
     """
@@ -265,20 +267,50 @@ def backThree(currentPos):
     """
     return (currentPos - 3)%40
 
-def top5(board):
+def top5(board, n=5):
     """
-    Returns a str of top 5 positions on the board
-    @param: game board
-    @returns: str
+    Prints top n positions on the board
+    @param - board: game board
+    @returns - None
     """
     s = list(board.items())
     s.sort(key=operator.itemgetter(1), reverse = True)
-
+    total = sum(board.values())
     for i, j in s[:5]:
-        print(f"Index {i} with {j} vists\n")
+        print(f"Index {i} with {j} vists ({(j/total)*100:.2f}% hit rate)\n")
 
-    return -4
+    return None
 
+def normalize(board):
+    """
+    Produces a new dict whose values sum to one
+    @param - board
+    @return normalized board
+    """
+    smooth = 1/sum(board.values())
+    return {k:v*smooth for k,v in board.items()}
+
+def displayPercents(board, minimal = False):
+    """
+    Prints out freqs percents
+    @param
+        - board: dict representing the board
+        - minimal: when true prints out only squares that have been landed on
+    @return None
+    """
+    nBoard = normalize(board)
+
+    if minimal:
+        printBoard = list(filter(lambda x: x[1]!=0, nBoard.items()))
+    else:
+         printBoard = nBoard.items()
+
+    for pos, val in board.items():
+        print(f"({pos}, {val*100:.2f}%) ", end = "")
+
+    print("\n")
+
+    return None
 
 if __name__ == "__main__":
     main()
