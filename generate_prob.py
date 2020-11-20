@@ -6,7 +6,8 @@ Created: November 15, 2020
 Author: Jake Chanenson
 """
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
+from matplotlib import pylab
 import operator
 import random
 import argparse
@@ -326,6 +327,7 @@ def displayGraphs(avg, args):
     @param  -avg: dict of avg moves across all episodes
     @retuns - None
     """
+    avg = normalize(avg)
     a = [str(x) for x in avg.keys()]
     b = (list(avg.values()))
     # fig = plt.figure(figsize=(8,10))
@@ -336,11 +338,10 @@ def displayGraphs(avg, args):
     # ax.set_title('Distribution of Where a Player Lands over %d Games With %d Turns Per Game' %(args.ep, args.turns))
     # ax.bar(a,b, 1.0, color='b')
     # plt.show()
-    pylab.bar(a,b, 1.0, color='b')
+    pylab.bar(a,b, .80, color='b')
     pylab.xlabel('Monopoly Square')
-    pylab.ylabel('Number of times Landed on a Sqaure')
+    pylab.ylabel('Percent Landed on a Sqaure')
     pylab.title('Distribution of Where a Player Lands over %d Games With %d Turns Per Game' %(args.ep, args.turns))
-    pylab.set_size_inches(8,8)
     pylab.show()
 
 if __name__ == "__main__":
