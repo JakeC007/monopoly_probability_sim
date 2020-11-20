@@ -10,6 +10,7 @@ import operator
 import random
 import argparse
 import sys
+from collections import Counter
 
 def main():
     parser = argparse.ArgumentParser(description='Generates frequency of \
@@ -46,6 +47,12 @@ def main():
         run = newGame(args.turns, i, args.v)
         episodes.append(run)
 
+    avg = {}
+    for e in episodes:
+        avg = {k: avg.get(k,0) + e.get(k,0) for k, v in e.items()}
+
+    print(list(avg.items()))
+
     #TODO AVERAGE THE EIPSODES AND DO SOME DATA VIZ
 
 def newGame(turns, gNum, verbose):
@@ -55,7 +62,7 @@ def newGame(turns, gNum, verbose):
         - turns: number of turns
         - gNum: the game number
         - verbose: output or not (prints game summary)
-    @returns: board freq
+    @returns: dict of board freq
     """
     global JAILCNT, CARDCNT
     JAILCNT = 0 #turns in jail
@@ -79,13 +86,16 @@ def newGame(turns, gNum, verbose):
                 * Top 5 most frequent spots are below\n\
                 ")
         top5(board)
+        print(f"Percent hit rate of full board:")
         displayPercents(board)
+        print(f"\n\nPercent hit rate of landed on squares:")
         displayPercents(board, True)
         #print squares that were landed on
-        print(list(filter(lambda x: x[1]!=0, board.items())))
+        print(f"\n\nFreq of landed on squares:\n \
+                {list(filter(lambda x: x[1]!=0, board.items()))}\n")
         print("*"*10)
 
-    return list(board.items())
+    return board
 
 def movePlayer(board, currentPos):
     """
@@ -305,10 +315,8 @@ def displayPercents(board, minimal = False):
     else:
          printBoard = nBoard.items()
 
-    for pos, val in board.items():
+    for pos, val in printBoard:
         print(f"({pos}, {val*100:.2f}%) ", end = "")
-
-    print("\n")
 
     return None
 
