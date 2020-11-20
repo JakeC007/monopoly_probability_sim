@@ -1,6 +1,5 @@
-# monopoly_probability_sim
-A quick implementation of simulating monopoly board probabilities
-
+# Monopoly Probability Sim
+A quick implementation of simulating monopoly board probabilities. 
 
 
 ### Rules Implemented
@@ -25,7 +24,6 @@ A: I thought about having two die that each had their own respective probability
 Q:
 
 
-### TODO
-- fix jail bug (delta between reported turns in jail and representation on board)
+### Possible Extensions For The Future
 - create top 5 squares summary
 - create percentages of board representation
