@@ -22,4 +22,5 @@ Q: *Why didn't you add command line arguments to specify two die with independen
 A: I thought about having two die that each had their own respective probability distributions, but I decided that it would be too clunky to have a user input 12 (!) fractions into the terminal.
 
 Q: *Can this program play Monopoly?*
+
 A: No. My script merely keeps track of where players land in Monopoly. I added the subset of movement rules found in the community chest and chance cards to make the simulation more accurate. 
