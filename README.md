@@ -27,3 +27,6 @@ Q: *Can this program play Monopoly?*
 ## Results
 
 ![Data Viz of 20 turns per game for 400 games](./Images/Figure_1.png)
+![Data Viz of 15 turns per game for 400 games](./Images/Figure_2.png)
+![Data Viz of 10 turns per game for 400 games](./Images/Figure_3.png)
+![Data Viz of 7 turns per game for 400 games](./Images/Figure_4.png)
