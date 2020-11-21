@@ -6,7 +6,6 @@ Created: November 15, 2020
 Author: Jake Chanenson
 """
 import numpy as np
-# import matplotlib.pyplot as plt
 from matplotlib import pylab
 import operator
 import random
@@ -51,10 +50,10 @@ def main():
     avg = {}
     for e in episodes:
         avg = {k: avg.get(k,0) + e.get(k,0) for k, v in e.items()}
+    if args.v:
+        print(list(avg.items()))
 
-    print(list(avg.items()))
     displayGraphs(avg, args)
-    #TODO AVERAGE THE EIPSODES AND DO SOME DATA VIZ
 
 def newGame(turns, gNum, verbose):
     """
@@ -87,14 +86,12 @@ def newGame(turns, gNum, verbose):
                 * Top 5 most frequent spots are below\n\
                 ")
         top5(board)
-        print(f"Percent hit rate of full board:")
-        displayPercents(board)
         print(f"\n\nPercent hit rate of landed on squares:")
         displayPercents(board, True)
-        #print squares that were landed on
+
         print(f"\n\nFreq of landed on squares:\n \
                 {list(filter(lambda x: x[1]!=0, board.items()))}\n")
-        print("*"*10)
+        print("*-*"*10)
 
     return board
 
@@ -327,17 +324,13 @@ def displayGraphs(avg, args):
     @param  -avg: dict of avg moves across all episodes
     @retuns - None
     """
+    #process data
     avg = normalize(avg)
     a = [str(x) for x in avg.keys()]
-    b = (list(avg.values()))
-    # fig = plt.figure(figsize=(8,10))
-    # ax = fig.add_axes()
-    #
-    # ax.set_xlabel('Monopoly Square')
-    # ax.set_ylabel('Number of times Landed on a Sqaure')
-    # ax.set_title('Distribution of Where a Player Lands over %d Games With %d Turns Per Game' %(args.ep, args.turns))
-    # ax.bar(a,b, 1.0, color='b')
-    # plt.show()
+    b = [x*100 for x in avg.values()]
+    a[0] = "Jail" #rename for better visuals
+
+    #graph
     pylab.bar(a,b, .80, color='b')
     pylab.xlabel('Monopoly Square')
     pylab.ylabel('Percent Landed on a Sqaure')
